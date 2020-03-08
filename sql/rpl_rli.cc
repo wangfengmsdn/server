@@ -35,7 +35,7 @@
 #include "sql_table.h"
 
 static int count_relay_log_space(Relay_log_info* rli);
-bool xa_trans_force_rollback(THD *thd);
+bool xa_trans_force_rollback(THD *thd, bool arg= false);
 /**
    Current replication state (hash of last GTID executed, per replication
    domain).

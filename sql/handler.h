@@ -1863,6 +1863,11 @@ public:
     DBUG_ASSERT(is_started());
     m_flags|= (int) TRX_READ_WRITE;
   }
+  void set_trx_read_only()
+  {
+    DBUG_ASSERT(is_started());
+    m_flags&= (int) ~TRX_READ_WRITE;
+  }
   bool is_trx_read_write() const
   {
     DBUG_ASSERT(is_started());
@@ -5173,4 +5178,5 @@ void print_keydup_error(TABLE *table, KEY *key, myf errflag);
 
 int del_global_index_stat(THD *thd, TABLE* table, KEY* key_info);
 int del_global_table_stat(THD *thd, const  LEX_CSTRING *db, const LEX_CSTRING *table);
+uint ha_count_rw_all(THD *thd, Ha_trx_info **ptr_ha_info);
 #endif /* HANDLER_INCLUDED */

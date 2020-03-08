@@ -44,5 +44,116 @@ connection slave;
 include/diff_tables.inc [master:t1, slave:t1]
 include/diff_tables.inc [master:t2, slave:t2]
 connection master;
-drop table t1, t2;
+flush logs;
+create table tm (a int) engine=myisam;
+set @query1="select 1";
+set @query2="select count(*) into @s2 from t1";
+set @query3="insert into tm set a=1";
+connection master;
+connect  master_$xid, 127.0.0.1,root,,$db,$MASTER_MYPORT,;
+xa start 'ro_3';
+insert into tm set a=1;
+xa end 'ro_3';
+xa prepare 'ro_3';;
+disconnect master_ro_3;
+connection master;
+connect  master_$xid, 127.0.0.1,root,,$db,$MASTER_MYPORT,;
+xa start 'ro_2';
+select count(*) into @s2 from t1;
+xa end 'ro_2';
+xa prepare 'ro_2';;
+disconnect master_ro_2;
+connection master;
+connect  master_$xid, 127.0.0.1,root,,$db,$MASTER_MYPORT,;
+xa start 'ro_1';
+select 1;
+1
+1
+xa end 'ro_1';
+xa prepare 'ro_1';;
+disconnect master_ro_1;
+connection master;
+connect  master_$xid, 127.0.0.1,root,,$db,$MASTER_MYPORT,;
+xa start 'ro_3';
+insert into tm set a=1;
+xa end 'ro_3';
+xa prepare 'ro_3';;
+disconnect master_ro_3;
+connection master;
+connect  master_$xid, 127.0.0.1,root,,$db,$MASTER_MYPORT,;
+xa start 'ro_2';
+select count(*) into @s2 from t1;
+xa end 'ro_2';
+xa prepare 'ro_2';;
+disconnect master_ro_2;
+connection master;
+connect  master_$xid, 127.0.0.1,root,,$db,$MASTER_MYPORT,;
+xa start 'ro_1';
+select 1;
+1
+1
+xa end 'ro_1';
+xa prepare 'ro_1';;
+disconnect master_ro_1;
+*** 3 prepared xa:s must be in the list:
+connection master;
+xa recover;
+formatID	gtrid_length	bqual_length	data
+1	4	0	ro_2
+1	4	0	ro_1
+1	4	0	ro_3
+*** Zero prepared xa:s must be in the list:
+xa recover;
+formatID	gtrid_length	bqual_length	data
+create database test_ign;
+set @@sql_log_bin = 0;
+create table test_ign.t (a int) engine=InnoDB;;
+set @@sql_log_bin = 1;
+connect  master_$xid, 127.0.0.1,root,,$db,$MASTER_MYPORT,;
+xa start 'rw_no_binlog';
+insert into .t set a=1;
+xa end 'rw_no_binlog';
+xa prepare 'rw_no_binlog';;
+disconnect master_rw_no_binlog;
+*** rw_no_binlog must be in the list:
+connection master;
+xa recover;
+formatID	gtrid_length	bqual_length	data
+1	12	0	rw_no_binlog
+*** Zero must be in the list:
+connection master;
+xa recover;
+formatID	gtrid_length	bqual_length	data
+show binlog events  limit 1,1;
+Log_name	Pos	Event_type	Server_id	End_log_pos	Info
+master-bin.000001	#	Gtid_list	1	#	[]
+include/save_master_gtid.inc
+connection slave;
+include/sync_with_master_gtid.inc
+connect  master_$xid, 127.0.0.1,root,,$db,$MASTER_MYPORT,;
+set @@session.sql_log_bin = OFF;
+xa start 'skip_binlog';
+insert into t2 values(1);
+xa end 'skip_binlog';
+xa prepare 'skip_binlog';;
+disconnect master_skip_binlog;
+*** skip_binlog must be in the list:
+connection master;
+xa recover;
+formatID	gtrid_length	bqual_length	data
+1	11	0	skip_binlog
+connection master;
+call mtr.add_suppression("Slave: XAER_NOTA: Unknown XID");
+xa rollback 'skip_binlog';
+*** Zero must be in the list:
+connection master;
+xa recover;
+formatID	gtrid_length	bqual_length	data
+connection slave;
+include/wait_for_slave_sql_error.inc [errno=1397]
+set @@global.sql_slave_skip_counter= 1;
+include/start_slave.inc
+connection master;
+drop database test_ign;
+drop table t1, t2, tm;
 include/rpl_end.inc
