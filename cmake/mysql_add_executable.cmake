@@ -47,8 +47,6 @@ FUNCTION (MYSQL_ADD_EXECUTABLE)
     ENDIF()
   ENDIF()
 
-  SET(ORIG_WIN32 WIN32)
-
   IF (ARG_WIN32)
     SET(WIN32 ARG_WIN32)
   ELSE()
@@ -65,19 +63,7 @@ FUNCTION (MYSQL_ADD_EXECUTABLE)
     UNSET(EXCLUDE_FROM_ALL)
   ENDIF()
 
-  # set name of binary
-  list(FIND MARIADB_SYMLINK_TOS ${target} _index)
-
-  if (${_index} GREATER -1)
-    list(GET MARIADB_SYMLINK_FROMS ${_index} mariadbname)
-  endif()
-
-  IF(NOT ${mariadbname} STREQUAL "")
-    ADD_EXECUTABLE(${mariadbname} ${WIN32} ${MACOSX_BUNDLE} ${EXCLUDE_FROM_ALL} ${sources})
-    SET_TARGET_PROPERTIES(${mariadbname} PROPERTIES OUTPUT_NAME ${mariadbname})
-  ELSE()
-    ADD_EXECUTABLE(${target} ${WIN32} ${MACOSX_BUNDLE} ${EXCLUDE_FROM_ALL} ${sources})
-  ENDIF()
+  ADD_EXECUTABLE(${target} ${WIN32} ${MACOSX_BUNDLE} ${EXCLUDE_FROM_ALL} ${sources})
 
   # tell CPack where to install
   IF(NOT ARG_EXCLUDE_FROM_ALL)
@@ -102,6 +88,33 @@ FUNCTION (MYSQL_ADD_EXECUTABLE)
     ENDIF()
   ENDIF()
 
-  # create mariadb named symlink
-  CREATE_MARIADB_SYMLINK(${target} ${ARG_DESTINATION} ${COMP})
+  # create MySQL named "legacy links"
+
+  # Windows note:
+  # Here, hardlinks are used, because cmake can't install symlinks.
+  # In packages, there are won't be links, just copies.
+  GET_SYMLINK(${target} link)
+  IF(link)
+    IF(UNIX)
+      ADD_CUSTOM_COMMAND(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+          $<TARGET_FILE:${target}> $<TARGET_FILE_DIR:${target}>/${link}
+        COMMENT "Creating ${link} link")
+    ELSE()
+      SET(link ${link}.exe)
+      ADD_CUSTOM_COMMAND(TARGET ${target} POST_BUILD
+        COMMAND cmake -E rm -f ${link}
+        COMMAND mklink /H ${link} $<TARGET_FILE_NAME:${target}>
+        COMMENT "Creating ${link} link"
+        WORKING_DIRECTORY $<TARGET_FILE_DIR:${target}>)
+    ENDIF()
+    
+    IF(CMAKE_VERSION VERSION_LESS 3.0.0)
+      get_target_property(LOC_TARGET ${target} LOCATION)
+      get_filename_component(LOC_TARGET_DIR ${LOC_TARGET} DIRECTORY)
+      INSTALL(PROGRAMS ${LOC_TARGET_DIR}/${link} DESTINATION ${ARG_DESTINATION} COMPONENT ${COMP})
+    ELSE()
+      INSTALL(PROGRAMS $<TARGET_FILE_DIR:${target}>/${link} DESTINATION ${ARG_DESTINATION} COMPONENT ${COMP})
+    ENDIF()
+  ENDIF()
 ENDFUNCTION()

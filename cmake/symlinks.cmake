@@ -45,37 +45,10 @@ REGISTER_SYMLINK("mariadbd-multi" "mysqld_multi")
 REGISTER_SYMLINK("mariadbd-safe" "mysqld_safe")
 REGISTER_SYMLINK("mariadbd-safe-helper" "mysqld_safe_helper")
 
-# Add MariaDB symlinks
-macro(CREATE_MARIADB_SYMLINK src dir comp)
-  # Find the MariaDB name for executable
-  list(FIND MARIADB_SYMLINK_FROMS ${src} _index)
-
+MACRO(GET_SYMLINK name out)
+  set(${out})
+  list(FIND MARIADB_SYMLINK_FROMS ${name} _index)
   if (${_index} GREATER -1)
-    list(GET MARIADB_SYMLINK_TOS ${_index} mariadbname)
+    list(GET MARIADB_SYMLINK_TOS ${_index} ${out})
   endif()
-
-  if (mariadbname)
-    CREATE_MARIADB_SYMLINK_IN_DIR(${src} ${mariadbname} ${dir} ${comp})
-  endif()
-endmacro(CREATE_MARIADB_SYMLINK)
-
-# Add MariaDB symlinks in directory
-macro(CREATE_MARIADB_SYMLINK_IN_DIR dest src dir comp)
-  CREATE_MARIADB_SYMLINK_IN_DIR_PREFIX(${dest} ${src} ${dir} ${comp} "SYM" ${dest})
-endmacro(CREATE_MARIADB_SYMLINK_IN_DIR)
-
-macro(CREATE_MARIADB_SYMLINK_IN_DIR_PREFIX dest src dir comp target_prefix depends)
-  if(UNIX)
-#    add_custom_target(${target_prefix}_${src} ALL POST_BUILD ${CMAKE_COMMAND} -E create_symlink ${dest} ${src} DEPENDS ${depends} COMMENT "Creating ${src} symlink")
-#    add_custom_target(${target_prefix}_${src} DEPENDS ${src})
-    add_custom_command(TARGET ${dest} POST_BUILD COMMAND ${CMAKE_COMMAND} -E create_symlink ${dest} ${src}
-                       COMMENT "Creating ${src} symlink")
-
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${src} DESTINATION ${dir} COMPONENT ${comp})
-  elseif(CMAKE_HOST_WIN32)
-    add_custom_target(${target_prefix}_${src} ALL POST_BUILD ${CMAKE_COMMAND} -E create_symlink ${dest}.exe ${CMAKE_BUILD_TYPE}/${src}.exe
-      DEPENDS ${depends}.exe
-      COMMENT "Creating ${src}.exe symlink")
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${src}.exe" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}" COMPONENT ${comp})
-  endif()
-endmacro(CREATE_MARIADB_SYMLINK_IN_DIR_PREFIX)
+ENDMACRO()

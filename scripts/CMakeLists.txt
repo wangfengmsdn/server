@@ -230,6 +230,18 @@ SET(mysqlaccess_COMPONENT COMPONENT Client)
 SET(mysql_find_rows_COMPONENT COMPONENT Client)
 SET(mytop_COMPONENT Mytop)
 
+MACRO(INSTALL_LINK old new destination component)
+  EXECUTE_PROCESS(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${old} ${new}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  INSTALL(
+    PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${new}
+    DESTINATION ${destination}
+    COMPONENT ${component}
+  )
+ENDMACRO()
+
 IF(WIN32)
   # On Windows, some .sh and some .pl.in files are configured
   # The resulting files will have .pl extension (those are perl scripts)
@@ -302,8 +314,8 @@ ELSE()
     if(${_index} GREATER -1)
       list(GET MARIADB_SYMLINK_TOS ${_index} binname)
     else()
-      set(binname ${file})
-    endif()
+        set(binname ${file})
+      endif()
 
     if(NOT "${binname}" STREQUAL "")
       IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${binname}.sh)
@@ -328,9 +340,7 @@ ELSE()
 
       # Create symlink
       if (NOT ${binname} STREQUAL ${file})
-        ADD_CUSTOM_COMMAND(OUTPUT ${binname} COMMAND ${CMAKE_COMMAND} ARGS -E create_symlink ${file} ${binname})
-        ADD_CUSTOM_TARGET(symscript_${binname} ALL DEPENDS ${binname})
-        INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${binname} DESTINATION ${INSTALL_BINDIR} COMPONENT Server)
+        INSTALL_LINK(${file} ${binname} ${INSTALL_BINDIR} ${${file}_COMPONENT})
 
         # Place mysql_install_db symlink also in scripts
         if (${binname} STREQUAL "mysql_install_db")
@@ -342,23 +352,7 @@ ELSE()
     endif()
   ENDFOREACH()
 
-  SET (wsrep_sst_rsync_wan ${CMAKE_CURRENT_BINARY_DIR}/wsrep_sst_rsync_wan)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${wsrep_sst_rsync_wan}
-    COMMAND ${CMAKE_COMMAND} ARGS -E create_symlink
-      wsrep_sst_rsync
-      wsrep_sst_rsync_wan
-  )
-  ADD_CUSTOM_TARGET(symlink_wsrep_sst_rsync
-      ALL
-      DEPENDS ${wsrep_sst_rsync_wan}
-  )
-  INSTALL(
-    FILES  ${wsrep_sst_rsync_wan}
-    DESTINATION ${INSTALL_BINDIR}
-    COMPONENT Server
-  )
-
+  INSTALL_LINK(wsrep_sst_rsync wsrep_sst_rsync_wan ${INSTALL_BINDIR} Server)
   FOREACH(file ${WSREP_SOURCE})
     CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/${file}.sh
       ${CMAKE_CURRENT_BINARY_DIR}/${file} ESCAPE_QUOTES @ONLY)
