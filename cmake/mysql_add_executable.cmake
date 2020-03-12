@@ -98,22 +98,21 @@ FUNCTION (MYSQL_ADD_EXECUTABLE)
     IF(UNIX)
       ADD_CUSTOM_COMMAND(TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
-          $<TARGET_FILE:${target}> $<TARGET_FILE_DIR:${target}>/${link}
-        COMMENT "Creating ${link} link")
+         ${target} ${link}
+        COMMENT "Creating ${link} link"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
+      INSTALL(PROGRAMS
+         ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${link}
+         DESTINATION
+         ${ARG_DESTINATION}
+         COMPONENT ${COMP})
     ELSE()
       SET(link ${link}.exe)
       ADD_CUSTOM_COMMAND(TARGET ${target} POST_BUILD
-        COMMAND cmake -E rm -f ${link}
+        COMMAND cmake -E remove -f ${link}
         COMMAND mklink /H ${link} $<TARGET_FILE_NAME:${target}>
         COMMENT "Creating ${link} link"
         WORKING_DIRECTORY $<TARGET_FILE_DIR:${target}>)
-    ENDIF()
-    
-    IF(CMAKE_VERSION VERSION_LESS 3.0.0)
-      get_target_property(LOC_TARGET ${target} LOCATION)
-      get_filename_component(LOC_TARGET_DIR ${LOC_TARGET} DIRECTORY)
-      INSTALL(PROGRAMS ${LOC_TARGET_DIR}/${link} DESTINATION ${ARG_DESTINATION} COMPONENT ${COMP})
-    ELSE()
       INSTALL(PROGRAMS $<TARGET_FILE_DIR:${target}>/${link} DESTINATION ${ARG_DESTINATION} COMPONENT ${COMP})
     ENDIF()
   ENDIF()

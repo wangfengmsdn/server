@@ -15,6 +15,7 @@ usr/bin/mariadb-dump usr/bin/mysqldump
 usr/bin/mariadb-dumpslow usr/bin/mysqldumpslow
 usr/bin/mariadb-import usr/bin/mysqlimport
 usr/bin/mariadb-report usr/bin/mysqlreport
+usr/bin/mariadb-show usr/bin/mysqlshow
 usr/bin/mariadb-slap usr/bin/mysqlslap
 
 usr/share/man/man1/mysqlcheck.1.gz usr/share/man/man1/mariadb-analyze.1.gz
@@ -24,3 +25,4 @@ usr/share/man/man1/mysqlcheck.1.gz usr/share/man/man1/mysqlanalyze.1.gz
 usr/share/man/man1/mysqlcheck.1.gz usr/share/man/man1/mysqloptimize.1.gz
 usr/share/man/man1/mysqlcheck.1.gz usr/share/man/man1/mysqlrepair.1.gz
 usr/share/man/man1/mysqlreport.1.gz usr/share/man/man1/mariadb-report.1.gz
+usr/share/man/man1/mysqlshow.1.gz usr/share/man/man1/mariadb-show.1.gz

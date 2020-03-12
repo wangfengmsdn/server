@@ -21,7 +21,12 @@ usr/bin/myisam_ftdump
 usr/bin/myisamchk
 usr/bin/myisamlog
 usr/bin/myisampack
-usr/bin/mysqld_safe
+usr/bin/mariadb-convert-table-format
+usr/bin/mariadb-secure-installation
+usr/bin/mariadb-setpermission
+usr/bin/mariadb-tzinfo-to-sql
+usr/bin/mariadbd-multi
+usr/bin/mariadbd-safe
 usr/bin/perror
 usr/bin/replace
 usr/bin/resolve_stack_dump
