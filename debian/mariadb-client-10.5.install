@@ -6,6 +6,7 @@ usr/bin/mariadb-fix-extensions
 usr/bin/mariadb-waitpid
 usr/bin/mariadb-access
 usr/bin/mariadb-admin
+usr/bin/mariadb-binlog
 usr/bin/mariadb-dump
 usr/bin/mariadb-dumpslow
 usr/bin/mariadb-import
