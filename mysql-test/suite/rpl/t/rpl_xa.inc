@@ -200,6 +200,7 @@ set @@session.sql_log_bin = OFF;
 --eval xa prepare '$xid';
 
 --disconnect master_$xid
+--source include/wait_until_disconnected.inc
 
 --echo *** $xid must be in the list:
 --connection master
